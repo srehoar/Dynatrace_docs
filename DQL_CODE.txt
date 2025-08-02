@@ -1,0 +1,97 @@
+data record(a="DQL", b=1, c = 0)
+
+data record(a="DQL", b=1, c = 0), record(a = "Dynatrace Query Language", b = 2.0, e="1"), record()
+
+describe logs
+
+fetch logs, from:-24h, to:-2h
+
+timeseries usage = avg(dt.host.cpu.usage), interval:1h ----- To undertsand CPU /memory usage in specific time
+
+timeseries min_usage = min(dt.host.cpu.usage), max_usage=max(dt.host.cpu.usage), interval:1h, by:dt.entity.host, from:-1h, to:0h
+
+timeseries usage=avg(dt.host.cpu.usage), by: dt.entity.host, interval:1h
+| fieldsAdd entityName(dt.entity.host)
+| filter dt.entity.host.name == "easyTravel"
+| summarize usage=avg(usage[]), by:{dt.entity.host.name}
+
+
+data record(timestamp = 1, location = "Vienna", bookings = 1254),
+     record(timestamp = 1, location = "London", bookings = 4564),
+     record(timestamp = 2, location = "Vienna", bookings = 1457),
+     record(timestamp = 2, location = "London", bookings = 8741),
+     record(timestamp = 3, location = "Vienna", bookings = 1654)| filterout location == "London" OR bookings==1654
+
+
+data record(value = 2),
+     record(value = 3),
+     record(value = 7),
+     record(value = 7),
+     record(value = 1)|filter value>5| summarize sum = sum(value), total_count=count(), array_create=collectArray(value), unique_value=takeAny(value)
+
+
+data record(key = "a", value = 1),
+     record(key = "b", value = 2),
+     record(key = "c", value = 4),
+     record(key = "b", amount = 10),
+     record(key = "c", amount = 20),
+     record(key = "c", amount = 40),
+     record(key = "d", amount = 50)
+     | summarize {value = takeAny(value), amount = arrayRemoveNulls(collectArray(amount))}, by:{key}
+     |expand amount
+
+
+data record(content="117.16.75.9--[14/Mar/2016:23:34:25 +0200] GET//setup.php HTTP/1.1 404 474")
+| parse content, "IPV4:ip LD HTTPDATE:time"
+
+
+data record(content="117.16.75.9--[14/Mar/2016:23:34:25 +0200] GET//setup.php HTTP/1.1 404 474")
+| parse content, "IPV4:ip LD HTTPDATE:time ']' LD:text"
+
+
+data record(a = 2),
+     record(a = 3),
+     record(a = 7),
+     record(a = 7),
+     record(a = 1)| limit 3 | sort - a
+     
+
+
+/*data record(a = 2),
+     record(a = 3),
+     record(a = 7),
+     record(a = 7),
+     record(a = 1)| limit 3 | sort - a
+     */
+     data record(a = 2),
+     record(a = 7)
+
+
+fetch logs
+| filter status=="ERROR"
+
+
+data record(a = 2),
+ record(a = 7)
+ | append [
+ data record(a = 3),
+ record(a = 7)
+ ]
+
+
+data record(key = "a", value = 1),
+     record(key = "b", value = 2),
+     record(key = "c", value = 4)
+| join [
+      data record(key = "b", amount = 10),
+           record(key = "c", amount = 20),
+           record(key = "c", amount = 40),
+           record(key = "d", amount = 50)
+    ],
+    on: { key }
+
+data record(a = array(1, 2, 3)),
+     record(a = 3.14),
+     record(a = "DQL is awesome!"),
+     record(a = record(content = "A nested record"))
+     | fieldsAdd type(a), asString(a)
